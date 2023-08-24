@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "CMake Debug",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/VideoStreamingServer/VideoStreamingServer",
+        "args": [],
+        "cwd": "${workspaceFolder}/build",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "gdb",
+        "preLaunchTask": "build"
+      }
+    ]
+  }
+  
