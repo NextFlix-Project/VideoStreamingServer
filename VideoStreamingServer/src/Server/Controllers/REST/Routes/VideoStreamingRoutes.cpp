@@ -4,6 +4,8 @@
 #include "../../../../VideoStream.h"
 #include <iostream>
 #include "../../../Server.h"
+#include <Utilities/files.h>
+#include <Utilities/http.h>
 
 using namespace NextFlix;
 
@@ -66,7 +68,7 @@ void VideoStreamingRoutes::initRoutes()
 
 });
 
-CROW_ROUTE(this->restAPI->getApp(), "/uploadfile").methods("POST"_method)([this](const crow::request &req, crow::response &res) 
+CROW_ROUTE(server->getCrowApp(), "/uploadfile").methods("POST"_method)([this](const crow::request &req, crow::response &res) 
     {
                                             std::string id = req.url_params.get("id");
 
@@ -127,10 +129,9 @@ CROW_ROUTE(this->restAPI->getApp(), "/uploadfile").methods("POST"_method)([this]
             }
         }
  
-        if (ret == 0)
-            res.write("File uploaded successfully");
-        else
-            res.write("Error uploading file");
+    
+            res.write("File received successfully");
+      
 
         res.end();
      });

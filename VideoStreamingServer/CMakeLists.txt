@@ -35,7 +35,7 @@ message(${LIBDASH_SOURCE_DIR}/libdash/libdash/build)
 file(MAKE_DIRECTORY ${LIBDASH_SOURCE_DIR}/libdash/libdash/build)
 
 execute_process(
-  #  COMMAND ${CMAKE_COMMAND} -E chdir ${LIBDASH_SOURCE_DIR}/libdash/libdash/build bash -c "cmake ../ && make"
+    COMMAND ${CMAKE_COMMAND} -E chdir ${LIBDASH_SOURCE_DIR}/libdash/libdash/build bash -c "cmake ../ && make"
 )
 endif()
 
