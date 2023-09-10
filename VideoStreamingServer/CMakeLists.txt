@@ -35,7 +35,7 @@ message(${LIBDASH_SOURCE_DIR}/libdash/libdash/build)
 file(MAKE_DIRECTORY ${LIBDASH_SOURCE_DIR}/libdash/libdash/build)
 
 execute_process(
-    COMMAND ${CMAKE_COMMAND} -E chdir ${LIBDASH_SOURCE_DIR}/libdash/libdash/build bash -c "cmake ../ && make"
+  #  COMMAND ${CMAKE_COMMAND} -E chdir ${LIBDASH_SOURCE_DIR}/libdash/libdash/build bash -c "cmake ../ && make"
 )
 endif()
 
@@ -54,6 +54,7 @@ pkg_check_modules(CURL REQUIRED libcurl)
 include_directories(${LIBPQXX_INCLUDE_DIRS})
 set(CROW_INCLUDE_DIR ./3rdParty/crow)
 set (COMMON_INCLUDE_DIR ./Common)
+include_directories(${COMMON_INCLUDE_DIR})
 
 file(GLOB_RECURSE SOURCES "*.cpp" "*.h" "*.c" "*.hpp")
 
@@ -70,6 +71,6 @@ target_include_directories(VideoStreamingServer PRIVATE
     ${CROW_INCLUDE_DIR}
     ${CURL_INCLUDE_DIRS}
     ${LIBDASH_BINARY_INCLUDE}
-    ${COMMON_INCLUDE_DIR}
+    ./Common
     /usr/include/postgresql
 )
