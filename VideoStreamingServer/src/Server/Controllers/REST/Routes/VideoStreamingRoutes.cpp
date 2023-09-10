@@ -49,27 +49,24 @@ void VideoStreamingRoutes::initRoutes()
 
         }
     
-        res.end(); 
-    });
+        res.end(); });
 
     CROW_ROUTE(server->getCrowApp(), "/streams/segment/<string>")
-([](const crow::request& req, crow::response& res, std::string segment) {
-     std::string segmentFilePath = "./vids/" + segment;
+    ([](const crow::request &req, crow::response &res, std::string segment)
+     {
+         std::string segmentFilePath = "./vids/" + segment;
 
-                 res.add_header("Access-Control-Allow-Origin", "*");             
+         res.add_header("Access-Control-Allow-Origin", "*");
 
-        res.set_header("Content-Type", "video/iso.segment");
+         res.set_header("Content-Type", "video/iso.segment");
 
-     res.set_static_file_info(segmentFilePath);
-    
-   
-    
-    res.end();  
+         res.set_static_file_info(segmentFilePath);
 
-});
+         res.end();
+     });
 
-CROW_ROUTE(server->getCrowApp(), "/uploadfile").methods("POST"_method)([this](const crow::request &req, crow::response &res) 
-    {
+    CROW_ROUTE(server->getCrowApp(), "/uploadfile").methods("POST"_method)([this](const crow::request &req, crow::response &res)
+                                                                           {
                                             std::string id = req.url_params.get("id");
 
 
@@ -133,7 +130,5 @@ CROW_ROUTE(server->getCrowApp(), "/uploadfile").methods("POST"_method)([this](co
             res.write("File received successfully");
       
 
-        res.end();
-     });
-    
+        res.end(); });
 }

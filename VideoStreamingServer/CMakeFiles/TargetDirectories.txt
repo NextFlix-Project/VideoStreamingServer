@@ -1,6 +1,0 @@
-/home/criffle/Desktop/CapstoneProject/VideoStreamingServer/VideoStreamingServer/CMakeFiles/edit_cache.dir
-/home/criffle/Desktop/CapstoneProject/VideoStreamingServer/VideoStreamingServer/CMakeFiles/rebuild_cache.dir
-/home/criffle/Desktop/CapstoneProject/VideoStreamingServer/VideoStreamingServer/VideoStreamingServer/CMakeFiles/libdash_external.dir
-/home/criffle/Desktop/CapstoneProject/VideoStreamingServer/VideoStreamingServer/VideoStreamingServer/CMakeFiles/VideoStreamingServer.dir
-/home/criffle/Desktop/CapstoneProject/VideoStreamingServer/VideoStreamingServer/VideoStreamingServer/CMakeFiles/edit_cache.dir
-/home/criffle/Desktop/CapstoneProject/VideoStreamingServer/VideoStreamingServer/VideoStreamingServer/CMakeFiles/rebuild_cache.dir
