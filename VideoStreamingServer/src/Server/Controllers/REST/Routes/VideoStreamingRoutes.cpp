@@ -66,6 +66,73 @@ void VideoStreamingRoutes::initRoutes()
 
 });
 
+CROW_ROUTE(this->restAPI->getApp(), "/uploadfile").methods("POST"_method)([this](const crow::request &req, crow::response &res) 
+    {
+                                            std::string id = req.url_params.get("id");
 
+
+        if (!isMultipartFormData(req.get_header_value("Content-Type")))
+        {
+            res.code = 400;
+            res.write("Invalid request");
+            res.end();
+            return;
+        }
+        
+        size_t boundaryPos = 0;
+        std::string boundary = getBoundaryFromHeader(req.get_header_value("Content-Type"), boundaryPos);
+
+        std::vector<std::string> parts;
+        std::string body = req.body;
+        
+        while (boundaryPos != std::string::npos) 
+        {      
+            size_t nextBoundaryPos = body.find(boundary, boundaryPos + boundary.size());
+        
+            if (nextBoundaryPos != std::string::npos)
+            {
+                std::string part = body.substr(boundaryPos + boundary.size(), nextBoundaryPos - (boundaryPos + boundary.size()));
+                parts.push_back(part);
+            }
+            boundaryPos = nextBoundaryPos;
+        }
+        
+        std::string outputFile = "";
+        std::string inputFile = "";
+
+        for (const auto& part : parts) 
+        {
+            size_t filenamePos = part.find("filename=\"");
+        
+            if (filenamePos != std::string::npos)
+            {
+                size_t filenameEndPos = part.find("\"", filenamePos + 10);
+                
+                if (filenameEndPos != std::string::npos)
+                {
+                    std::string filename = part.substr(filenamePos + 10, filenameEndPos - (filenamePos + 10));
+                    size_t contentPos = part.find("\r\n\r\n") + 4;
+                    std::string content = part.substr(contentPos);
+
+                    if (!doesDirectoryExist("./movies/" + id ))
+                        createDirectory("./movies/" + id);
+
+                    std::string savePath = "./movies/" + id + "/" + filename;
+                    inputFile = savePath;
+                    
+                    std::ofstream outfile(savePath, std::ofstream::binary);
+                    outfile.write(content.data(), content.size());
+                    outfile.close();
+                }
+            }
+        }
+ 
+        if (ret == 0)
+            res.write("File uploaded successfully");
+        else
+            res.write("Error uploading file");
+
+        res.end();
+     });
     
 }

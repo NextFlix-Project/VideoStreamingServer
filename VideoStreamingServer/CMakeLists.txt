@@ -53,10 +53,12 @@ pkg_check_modules(CURL REQUIRED libcurl)
 
 include_directories(${LIBPQXX_INCLUDE_DIRS})
 set(CROW_INCLUDE_DIR ./3rdParty/crow)
+set (COMMON_INCLUDE_DIR ./Common)
 
 file(GLOB_RECURSE SOURCES "*.cpp" "*.h" "*.c" "*.hpp")
 
 add_executable(VideoStreamingServer ${SOURCES})
+
 
 target_link_libraries(VideoStreamingServer PRIVATE
     ${LIBPQXX_LIBRARIES}
@@ -68,5 +70,6 @@ target_include_directories(VideoStreamingServer PRIVATE
     ${CROW_INCLUDE_DIR}
     ${CURL_INCLUDE_DIRS}
     ${LIBDASH_BINARY_INCLUDE}
+    ${COMMON_INCLUDE_DIR}
     /usr/include/postgresql
 )
