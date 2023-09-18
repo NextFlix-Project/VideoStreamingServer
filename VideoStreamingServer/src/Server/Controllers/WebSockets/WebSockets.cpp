@@ -2,7 +2,7 @@
 #include "../../Server.h"
 #include "../../../VideoStream.h"
 #include <crow.h>
- 
+#include <Utilities/files.h>
 
 #define CROW_ENFORCE_WS_SPEC
 
@@ -16,78 +16,42 @@ WebSocket::WebSocket(Server *server)
 
 WebSocket::~WebSocket()
 {
-
 }
 
-char *WebSocket::getBuffer() 
+char *WebSocket::getBuffer()
 {
     return this->buffer;
 }
 int WebSocket::initWebSockets()
 {
-    file = new std::ifstream("./video.mp4", std::ios::in | std::ios::binary);
+    CROW_WEBSOCKET_ROUTE(server->getCrowApp(), "/upload<string>")
+        .onopen([this](crow::websocket::connection &conn)
+                {
+                    connections[conn.get_remote_ip()] = "";
+                })
+        .onmessage([this](crow::websocket::connection &conn, const std::string &data, bool is_binary)
+                   {
+                    std::string id = connections[conn.get_remote_ip()];
 
-    if (!file->is_open())
-        std::cout << "File not open" << std::endl;
+            if (is_binary) {
 
-    int length = 1024 * 1024;
-   
+                   if (!doesDirectoryExist("./movies/" + id ))
+                        createDirectory("./movies/" + id);
 
-
-    // allocate memory:
-    if (buffer != NULL) delete buffer;
-    this->buffer = new char [length];
- 
-  //  file->read (buffer,length);
-   std::cout <<   file->gcount() << std::endl; 
-    //file->close();
-  //  VideoStream *videoStream = new NextFlix::VideoStream(0000000, file, 0);
-
-    CROW_WEBSOCKET_ROUTE(server->getCrowApp(), "/ws")
-    .onopen([this](crow::websocket::connection& conn){
-                // Create stream
-                // Add Stream
-                  //     char * bindata = videoStream->getBufferNext();
-                
-                  char * bindata =new char [1024 * 1024];
-         this->file->read (bindata, 1024 * 1024);
-
-        
-                conn.send_binary(crow::utility::base64encode(reinterpret_cast<const unsigned char*>(bindata), sizeof(bindata)));
-                             std::cout << "Connected" << std::endl;
+                std::string filePath  = "./movies/" + id + "/" + "filename";
+                std::ofstream outFile(filePath, std::ios::binary);
+                outFile.write(data.c_str(), data.size());
+                outFile.close();
+                std::cout << "File received: " << filePath << std::endl;
+            } 
+            else{
+                connections[conn.get_remote_ip()] = data;
+            }
+            
             })
-    .onclose([this](crow::websocket::connection& conn, const std::string& reason){
-                std::cout << reason << std::endl;
-            })
-    .onmessage([this](crow::websocket::connection& conn, const std::string& data, bool is_binary){
-                if (is_binary)
-                std::cout << data << std::endl;
-                else
-                std::cout << data << std::endl;
-
-        
-                // char * bindata = videoStream->getBufferNext();
-           
-                     char * bindata = this->getBuffer();
-         
-                conn.send_binary(bindata);
-            }); 
+        .onclose([this](crow::websocket::connection &conn, const std::string &reason) {
+            connections.erase(conn.get_remote_ip());
+        });
 
     return 0;
-}
-
-void WebSocket::addStream(VideoStream *stream)
-{
-    openStreams[stream->getUserUUID()] = stream;
-}
-
-int WebSocket::removeStream(uint64_t uuid)
-{
-    if (openStreams.find(uuid) != openStreams.end())
-    {
-        openStreams.erase(uuid);
-        return 0;
-    }
-
-    return 1;
 }

@@ -9,20 +9,23 @@ Server::Server(uint16_t port){
  
     this->port = port;
     RestAPI *restAPI = new RestAPI(this);
-
+    WebSocket *webSocket = new WebSocket(this);
     advertiseServer();
 
-    uint16_t threadCount = 0;
+    uint16_t threadCount = 10;
     try
     {
         app.port(port).concurrency(threadCount).run();
     }
     catch (const std::exception &e)
     {
-        std::cout << "REST server failed to run" << std::endl;
+        std::cout << "Server failed to run" << std::endl;
         std::cout << "Error: " << e.what() << std::endl;
 
     }
+
+    delete restAPI;
+    delete webSocket;
 }
 
 void Server::advertiseServer(){
@@ -57,7 +60,7 @@ void Server::advertiseServer(){
 
 
         if (res != CURLE_OK) {
-            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+            std::cout << curl_easy_strerror(res) << std::endl;
         }
 
         curl_easy_cleanup(curl);

@@ -13,13 +13,6 @@ VideoStreamingRoutes::VideoStreamingRoutes(Server *server)
 {
     this->server = server;
 
-    // std::ifstream *file = new std::ifstream("./video_dashinit.mp4", std::ios::in | std::ios::binary);
-
-    //   if (!file->is_open())
-    //    std::cout << "File not open" << std::endl;
-
-    //  videoStream = new NextFlix::VideoStream(0000000, file, 0);
-
     this->initRoutes();
 }
 
@@ -33,7 +26,9 @@ void VideoStreamingRoutes::initRoutes()
     CROW_ROUTE(server->getCrowApp(), "/stream")
     ([this](const crow::request &req, crow::response &res)
      {
-        std::ifstream mpdFile("./vids/output.mpd");
+        std::string id = req.url_params.get("id");
+
+        std::ifstream mpdFile("./movies/" + id + "/manifest.mpd");
 
         if (!mpdFile.is_open())
             res.body = "Error";
@@ -43,32 +38,34 @@ void VideoStreamingRoutes::initRoutes()
                     
             res.add_header("Access-Control-Allow-Origin", "*");             
             res.add_header("Content-Type", "application/dash+xml");
-            res.add_header("Content-Length", std::to_string(fileContents.size())); // Set Content-Length
-
+            res.add_header("Content-Length", std::to_string(fileContents.size()));   
             res.write(fileContents);
-
         }
     
         res.end(); });
 
-    CROW_ROUTE(server->getCrowApp(), "/streams/segment/<string>")
-    ([](const crow::request &req, crow::response &res, std::string segment)
+    CROW_ROUTE(server->getCrowApp(), "/stream/segment")
+    ([](const crow::request &req, crow::response &res)
      {
-         std::string segmentFilePath = "./vids/" + segment;
+        std::string id = req.url_params.get("id");
+        std::string segment = req.url_params.get("segment");
+        try {
+ 
+            std::string segmentFilePath = "./movies/" + id + "/" + segment;
 
-         res.add_header("Access-Control-Allow-Origin", "*");
+            res.add_header("Access-Control-Allow-Origin", "*");
+            res.set_header("Content-Type", "video/iso.segment");
+            res.set_static_file_info(segmentFilePath);
 
-         res.set_header("Content-Type", "video/iso.segment");
-
-         res.set_static_file_info(segmentFilePath);
-
-         res.end();
-     });
+        } catch (const std::exception& e) {
+            std::cerr << "Exception: " << e.what() << std::endl;
+        }
+        res.end(); 
+    });
 
     CROW_ROUTE(server->getCrowApp(), "/uploadfile").methods("POST"_method)([this](const crow::request &req, crow::response &res)
-                                                                           {
-                                            std::string id = req.url_params.get("id");
-
+    {
+        std::string id = req.url_params.get("id");
 
         if (!isMultipartFormData(req.get_header_value("Content-Type")))
         {
@@ -79,8 +76,8 @@ void VideoStreamingRoutes::initRoutes()
         }
         
         size_t boundaryPos = 0;
-        std::string boundary = getBoundaryFromHeader(req.get_header_value("Content-Type"), boundaryPos);
 
+        std::string boundary = getBoundaryFromHeader(req.get_header_value("Content-Type"), boundaryPos);
         std::vector<std::string> parts;
         std::string body = req.body;
         
@@ -112,7 +109,7 @@ void VideoStreamingRoutes::initRoutes()
                     std::string filename = part.substr(filenamePos + 10, filenameEndPos - (filenamePos + 10));
                     size_t contentPos = part.find("\r\n\r\n") + 4;
                     std::string content = part.substr(contentPos);
-
+                    
                     if (!doesDirectoryExist("./movies/" + id ))
                         createDirectory("./movies/" + id);
 
@@ -125,10 +122,7 @@ void VideoStreamingRoutes::initRoutes()
                 }
             }
         }
- 
-    
-            res.write("File received successfully");
-      
-
-        res.end(); });
+        res.write("File received successfully");
+        res.end(); 
+    });
 }
