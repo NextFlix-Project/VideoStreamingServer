@@ -12,5 +12,10 @@
 | libpq-dev         | `sudo apt install libpq-dev`        |
 | libpqxx           | `sudo apt-get install libpqxx-dev`  |
 
- 
-  
+## Build
+git clone https://github.com/NextFlix-Project/VideoStreamingServer.git
+cd VideoStreamingServer
+mkdir build
+cd build
+cmake ../
+make
