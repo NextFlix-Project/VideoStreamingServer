@@ -6,17 +6,16 @@ namespace NextFlix
     class VideoStream;
     class VideoStreamingRoutes
     {
-        private: 
+    private:
         Server *server;
         VideoStream *videoStream;
 
-        public:
+    public:
         VideoStreamingRoutes() = delete;
         VideoStreamingRoutes(Server *server);
         ~VideoStreamingRoutes();
 
-        private:
+    private:
         void initRoutes();
-
-    };  
+    };
 }

@@ -5,10 +5,10 @@
 
 #define DEBUG 1
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     uint port = 0;
-    
+
     for (int i = 1; i < argc; i++)
     {
         std::string arg = argv[i];
@@ -19,19 +19,20 @@ int main(int argc, char* argv[])
             {
                 port = std::stoi(argv[i + 1]);
 
-                if (port < 0 || port > 65535){
+                if (port < 0 || port > 65535)
+                {
                     std::cout << "Invalid port..." << std::endl;
-                    return 1; 
+                    return 1;
                 }
             }
         }
     }
 
-    #if DEBUG
-        port = 8888;
-    #endif
+#if DEBUG
+    port = 8888;
+#endif
 
     NextFlix::Server *server = new NextFlix::Server(port);
-  
+
     return 0;
 }

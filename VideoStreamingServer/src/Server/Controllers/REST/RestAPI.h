@@ -8,17 +8,17 @@ namespace NextFlix
 
     class RestAPI
     {
-        public:
-            RestAPI() = delete;
-            RestAPI(Server *server);
-            ~RestAPI();
+    public:
+        RestAPI() = delete;
+        RestAPI(Server *server);
+        ~RestAPI();
 
-        private: 
-            int threadCount;
-            VideoStreamingRoutes *videoStreamingRoutes;
-            Server *server;
-            
-        private:
-            int initRestAPI();
+    private:
+        int threadCount;
+        VideoStreamingRoutes *videoStreamingRoutes;
+        Server *server;
+
+    private:
+        int initRestAPI();
     };
 }

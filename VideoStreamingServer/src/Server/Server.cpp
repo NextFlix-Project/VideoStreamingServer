@@ -5,8 +5,9 @@
 
 using namespace NextFlix;
 
-Server::Server(uint16_t port){
- 
+Server::Server(uint16_t port)
+{
+
     this->port = port;
     RestAPI *restAPI = new RestAPI(this);
     WebSocket *webSocket = new WebSocket(this);
@@ -21,15 +22,15 @@ Server::Server(uint16_t port){
     {
         std::cout << "Server failed to run" << std::endl;
         std::cout << "Error: " << e.what() << std::endl;
-
     }
 
     delete restAPI;
     delete webSocket;
 }
 
-void Server::advertiseServer(){
-        CURL* curl;
+void Server::advertiseServer()
+{
+    CURL *curl;
     CURLcode res;
     std::string response_data;
 
@@ -37,10 +38,11 @@ void Server::advertiseServer(){
 
     curl = curl_easy_init();
 
-     if (curl) {
+    if (curl)
+    {
         curl_easy_setopt(curl, CURLOPT_URL, "http://127.0.0.1:8080/api/v1/server/internal/registerserver");
- 
-        struct curl_slist* headers = nullptr;
+
+        struct curl_slist *headers = nullptr;
         headers = curl_slist_append(headers, "Content-Type: application/json");
         headers = curl_slist_append(headers, "Authorization: thisissomekeyforthevideoserverstocommunicate");
 
@@ -50,7 +52,7 @@ void Server::advertiseServer(){
         std::string serverType = "STREAMING";
 
         std::string json_data = R"({"port": ")" + serverPort + R"(", "serverType": ")" + serverType + R"("})";
-    
+
         const char *postData = json_data.c_str();
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData);
 
@@ -58,8 +60,8 @@ void Server::advertiseServer(){
 
         res = curl_easy_perform(curl);
 
-
-        if (res != CURLE_OK) {
+        if (res != CURLE_OK)
+        {
             std::cout << curl_easy_strerror(res) << std::endl;
         }
 

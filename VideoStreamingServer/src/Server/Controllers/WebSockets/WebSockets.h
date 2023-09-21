@@ -28,6 +28,5 @@ namespace NextFlix
         void addStream(VideoStream *videoStream);
         int removeStream(uint64_t uuid);
         char *getBuffer();
-        
-    };
+        };
 }

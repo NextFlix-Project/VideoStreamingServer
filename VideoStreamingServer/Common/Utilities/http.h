@@ -2,7 +2,7 @@
 #include <string>
 #include <algorithm>
 
-static inline bool isMultipartFormData(const std::string contentType) 
+static inline bool isMultipartFormData(const std::string contentType)
 {
     std::string lowerContentType = contentType;
     std::transform(lowerContentType.begin(), lowerContentType.end(), lowerContentType.begin(), ::tolower);
@@ -12,18 +12,18 @@ static inline bool isMultipartFormData(const std::string contentType)
 
 static inline std::string getBoundaryFromHeader(std::string header, size_t &boundaryPos)
 {
-        std::string boundary = header;
+    std::string boundary = header;
 
-        boundaryPos = boundary.find("boundary=");
+    boundaryPos = boundary.find("boundary=");
 
-        if (boundaryPos != std::string::npos)
-        {
-            boundary = header.substr(boundaryPos + 9); 
+    if (boundaryPos != std::string::npos)
+    {
+        boundary = header.substr(boundaryPos + 9);
 
-            size_t startPos = boundary.find_first_not_of(" \t");
-            size_t endPos = boundary.find_last_not_of(" \t");
-            boundary = boundary.substr(startPos, endPos - startPos + 1);
-        }
+        size_t startPos = boundary.find_first_not_of(" \t");
+        size_t endPos = boundary.find_last_not_of(" \t");
+        boundary = boundary.substr(startPos, endPos - startPos + 1);
+    }
 
-        return boundary;
+    return boundary;
 }

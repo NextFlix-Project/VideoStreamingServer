@@ -13,18 +13,18 @@ RestAPI::RestAPI(Server *server)
 
 RestAPI::~RestAPI()
 {
-   delete videoStreamingRoutes;
+    delete videoStreamingRoutes;
 }
 
 int RestAPI::initRestAPI()
 {
-    videoStreamingRoutes = new VideoStreamingRoutes(this->server); 
- 
-    CROW_ROUTE(server->getCrowApp(), "/heartbeat")([](const crow::request&, crow::response& res) {
+    videoStreamingRoutes = new VideoStreamingRoutes(this->server);
+
+    CROW_ROUTE(server->getCrowApp(), "/heartbeat")
+    ([](const crow::request &, crow::response &res)
+     {
         res.code = 200;
-        res.end();
-    });
-    
+        res.end(); });
+
     return 0;
 }
-
