@@ -1,6 +1,5 @@
 #include "Server.h"
 #include "Controllers/REST/RestAPI.h"
-#include "Controllers/WebSockets/WebSockets.h"
 #include <curl/curl.h>
 
 using namespace NextFlix;
@@ -10,7 +9,6 @@ Server::Server(uint16_t port)
 
     this->port = port;
     RestAPI *restAPI = new RestAPI(this);
-    WebSocket *webSocket = new WebSocket(this);
     advertiseServer();
 
     uint16_t threadCount = 10;
@@ -25,7 +23,6 @@ Server::Server(uint16_t port)
     }
 
     delete restAPI;
-    delete webSocket;
 }
 
 void Server::advertiseServer()

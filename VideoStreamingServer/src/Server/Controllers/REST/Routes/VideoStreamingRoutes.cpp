@@ -47,7 +47,7 @@ void VideoStreamingRoutes::initRoutes()
     CROW_ROUTE(server->getCrowApp(), "/stream/segment")
     ([](const crow::request &req, crow::response &res)
      {
-        std::string id = req.url_params.get("id");
+     std::string id = req.url_params.get("id");
         std::string segment = req.url_params.get("segment");
         try {
  
@@ -61,12 +61,14 @@ void VideoStreamingRoutes::initRoutes()
             std::cerr << "Exception: " << e.what() << std::endl;
         }
         res.end(); 
+ 
     });
 
     CROW_ROUTE(server->getCrowApp(), "/uploadfile").methods("POST"_method)([this](const crow::request &req, crow::response &res)
     {
         std::string id = req.url_params.get("id");
 
+  
         if (!isMultipartFormData(req.get_header_value("Content-Type")))
         {
             res.code = 400;
