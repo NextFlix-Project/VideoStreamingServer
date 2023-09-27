@@ -275,32 +275,11 @@ namespace crow
         return string_params[index];
     }
     /// @endcond
-
-    struct routing_handle_result
-    {
-        uint16_t rule_index;
-        std::vector<uint16_t> blueprint_indices;
-        routing_params r_params;
-        HTTPMethod method;
-
-        routing_handle_result() {}
-
-        routing_handle_result(uint16_t rule_index_, std::vector<uint16_t> blueprint_indices_, routing_params r_params_):
-          rule_index(rule_index_),
-          blueprint_indices(blueprint_indices_),
-          r_params(r_params_) {}
-
-        routing_handle_result(uint16_t rule_index_, std::vector<uint16_t> blueprint_indices_, routing_params r_params_, HTTPMethod method_):
-          rule_index(rule_index_),
-          blueprint_indices(blueprint_indices_),
-          r_params(r_params_),
-          method(method_) {}
-    };
 } // namespace crow
 
 // clang-format off
 #ifndef CROW_MSVC_WORKAROUND
-constexpr crow::HTTPMethod method_from_string(const char* str)
+constexpr crow::HTTPMethod operator"" _method(const char* str, size_t /*len*/)
 {
     return crow::black_magic::is_equ_p(str, "GET", 3)    ? crow::HTTPMethod::Get :
            crow::black_magic::is_equ_p(str, "DELETE", 6) ? crow::HTTPMethod::Delete :
@@ -344,11 +323,6 @@ constexpr crow::HTTPMethod method_from_string(const char* str)
 
            crow::black_magic::is_equ_p(str, "SOURCE", 6) ? crow::HTTPMethod::Source :
                                                            throw std::runtime_error("invalid http method");
-}
-
-constexpr crow::HTTPMethod operator"" _method(const char* str, size_t /*len*/)
-{
-    return method_from_string( str );
 }
 #endif
 // clang-format on

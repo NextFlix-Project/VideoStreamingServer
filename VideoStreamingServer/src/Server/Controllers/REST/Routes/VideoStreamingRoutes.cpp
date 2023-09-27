@@ -13,7 +13,7 @@ VideoStreamingRoutes::VideoStreamingRoutes(Server *server)
 {
     this->server = server;
 
-    this->initRoutes();
+    this->initRoutes(); 
 }
 
 VideoStreamingRoutes::~VideoStreamingRoutes()

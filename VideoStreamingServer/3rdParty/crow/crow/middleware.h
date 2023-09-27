@@ -92,18 +92,6 @@ namespace crow
             static constexpr bool value = decltype(f<T>(nullptr))::value;
         };
 
-        template<typename MW>
-        struct is_middleware_global
-        {
-            template<typename C>
-            static std::false_type f(typename check_global_call_false<MW>::template get<C>*);
-
-            template<typename C>
-            static std::true_type f(...);
-
-            static const bool value = decltype(f<MW>(nullptr))::value;
-        };
-
         template<typename MW, typename Context, typename ParentContext>
         typename std::enable_if<!is_before_handle_arity_3_impl<MW>::value>::type
           before_handler_call(MW& mw, request& req, response& res, Context& ctx, ParentContext& /*parent_ctx*/)
@@ -133,17 +121,17 @@ namespace crow
         }
 
 
-        template<typename CallCriteria,
+        template<template<typename QueryMW> class CallCriteria, // Checks if QueryMW should be called in this context
                  int N, typename Context, typename Container>
         typename std::enable_if<(N < std::tuple_size<typename std::remove_reference<Container>::type>::value), bool>::type
-          middleware_call_helper(const CallCriteria& cc, Container& middlewares, request& req, response& res, Context& ctx)
+          middleware_call_helper(Container& middlewares, request& req, response& res, Context& ctx)
         {
 
             using CurrentMW = typename std::tuple_element<N, typename std::remove_reference<Container>::type>::type;
 
-            if (!cc.template enabled<CurrentMW>(N))
+            if (!CallCriteria<CurrentMW>::value)
             {
-                return middleware_call_helper<CallCriteria, N + 1, Context, Container>(cc, middlewares, req, res, ctx);
+                return middleware_call_helper<CallCriteria, N + 1, Context, Container>(middlewares, req, res, ctx);
             }
 
             using parent_context_t = typename Context::template partial<N - 1>;
@@ -154,7 +142,7 @@ namespace crow
                 return true;
             }
 
-            if (middleware_call_helper<CallCriteria, N + 1, Context, Container>(cc, middlewares, req, res, ctx))
+            if (middleware_call_helper<CallCriteria, N + 1, Context, Container>(middlewares, req, res, ctx))
             {
                 after_handler_call<CurrentMW, Context, parent_context_t>(std::get<N>(middlewares), req, res, ctx, static_cast<parent_context_t&>(ctx));
                 return true;
@@ -163,68 +151,88 @@ namespace crow
             return false;
         }
 
-        template<typename CallCriteria, int N, typename Context, typename Container>
+        template<template<typename QueryMW> class CallCriteria, int N, typename Context, typename Container>
         typename std::enable_if<(N >= std::tuple_size<typename std::remove_reference<Container>::type>::value), bool>::type
-          middleware_call_helper(const CallCriteria& /*cc*/, Container& /*middlewares*/, request& /*req*/, response& /*res*/, Context& /*ctx*/)
+          middleware_call_helper(Container& /*middlewares*/, request& /*req*/, response& /*res*/, Context& /*ctx*/)
         {
             return false;
         }
 
-        template<typename CallCriteria, int N, typename Context, typename Container>
+        template<template<typename QueryMW> class CallCriteria, int N, typename Context, typename Container>
         typename std::enable_if<(N < 0)>::type
-          after_handlers_call_helper(const CallCriteria& /*cc*/, Container& /*middlewares*/, Context& /*context*/, request& /*req*/, response& /*res*/)
+          after_handlers_call_helper(Container& /*middlewares*/, Context& /*context*/, request& /*req*/, response& /*res*/)
         {
         }
 
-        template<typename CallCriteria, int N, typename Context, typename Container>
-        typename std::enable_if<(N == 0)>::type after_handlers_call_helper(const CallCriteria& cc, Container& middlewares, Context& ctx, request& req, response& res)
+        template<template<typename QueryMW> class CallCriteria, int N, typename Context, typename Container>
+        typename std::enable_if<(N == 0)>::type after_handlers_call_helper(Container& middlewares, Context& ctx, request& req, response& res)
         {
             using parent_context_t = typename Context::template partial<N - 1>;
             using CurrentMW = typename std::tuple_element<N, typename std::remove_reference<Container>::type>::type;
-            if (cc.template enabled<CurrentMW>(N))
+            if (CallCriteria<CurrentMW>::value)
             {
                 after_handler_call<CurrentMW, Context, parent_context_t>(std::get<N>(middlewares), req, res, ctx, static_cast<parent_context_t&>(ctx));
             }
         }
 
-        template<typename CallCriteria, int N, typename Context, typename Container>
-        typename std::enable_if<(N > 0)>::type after_handlers_call_helper(const CallCriteria& cc, Container& middlewares, Context& ctx, request& req, response& res)
+        template<template<typename QueryMW> class CallCriteria, int N, typename Context, typename Container>
+        typename std::enable_if<(N > 0)>::type after_handlers_call_helper(Container& middlewares, Context& ctx, request& req, response& res)
         {
             using parent_context_t = typename Context::template partial<N - 1>;
             using CurrentMW = typename std::tuple_element<N, typename std::remove_reference<Container>::type>::type;
-            if (cc.template enabled<CurrentMW>(N))
+            if (CallCriteria<CurrentMW>::value)
             {
                 after_handler_call<CurrentMW, Context, parent_context_t>(std::get<N>(middlewares), req, res, ctx, static_cast<parent_context_t&>(ctx));
             }
-            after_handlers_call_helper<CallCriteria, N - 1, Context, Container>(cc, middlewares, ctx, req, res);
+            after_handlers_call_helper<CallCriteria, N - 1, Context, Container>(middlewares, ctx, req, res);
         }
 
         // A CallCriteria that accepts only global middleware
+        template<typename MW>
         struct middleware_call_criteria_only_global
         {
-            template<typename MW>
-            constexpr bool enabled(int) const
-            {
-                return is_middleware_global<MW>::value;
-            }
+            template<typename C>
+            static std::false_type f(typename check_global_call_false<MW>::template get<C>*);
+
+            template<typename C>
+            static std::true_type f(...);
+
+            static const bool value = decltype(f<MW>(nullptr))::value;
         };
 
+        // wrapped_handler_call transparently wraps a handler call behind (req, res, args...)
         template<typename F, typename... Args>
-        typename std::enable_if<black_magic::CallHelper<F, black_magic::S<Args...>>::value, void>::type
-          wrapped_handler_call(crow::request& /*req*/, crow::response& res, const F& f, Args&&... args)
+        typename std::enable_if<black_magic::is_callable<F, const crow::request, crow::response&, Args...>::value>::type
+          wrapped_handler_call(crow::request& req, crow::response& res, const F& f, Args&&... args)
         {
-            static_assert(!std::is_same<void, decltype(f(std::declval<Args>()...))>::value,
-                          "Handler function cannot have void return type; valid return types: string, int, crow::response, crow::returnable");
+            static_assert(std::is_same<void, decltype(f(std::declval<crow::request>(), std::declval<crow::response&>(), std::declval<Args>()...))>::value,
+                          "Handler function with response argument should have void return type");
 
-            res = crow::response(f(std::forward<Args>(args)...));
-            res.end();
+            f(req, res, std::forward<Args>(args)...);
         }
 
         template<typename F, typename... Args>
-        typename std::enable_if<
-          !black_magic::CallHelper<F, black_magic::S<Args...>>::value &&
-            black_magic::CallHelper<F, black_magic::S<crow::request&, Args...>>::value,
-          void>::type
+        typename std::enable_if<black_magic::is_callable<F, crow::request&, crow::response&, Args...>::value && !black_magic::is_callable<F, const crow::request, crow::response&, Args...>::value>::type
+          wrapped_handler_call(crow::request& req, crow::response& res, const F& f, Args&&... args)
+        {
+            static_assert(std::is_same<void, decltype(f(std::declval<crow::request&>(), std::declval<crow::response&>(), std::declval<Args>()...))>::value,
+                          "Handler function with response argument should have void return type");
+
+            f(req, res, std::forward<Args>(args)...);
+        }
+
+        template<typename F, typename... Args>
+        typename std::enable_if<black_magic::is_callable<F, crow::response&, Args...>::value>::type
+          wrapped_handler_call(crow::request& /*req*/, crow::response& res, const F& f, Args&&... args)
+        {
+            static_assert(std::is_same<void, decltype(f(std::declval<crow::response&>(), std::declval<Args>()...))>::value,
+                          "Handler function with response argument should have void return type");
+
+            f(res, std::forward<Args>(args)...);
+        }
+
+        template<typename F, typename... Args>
+        typename std::enable_if<black_magic::is_callable<F, crow::request, Args...>::value>::type
           wrapped_handler_call(crow::request& req, crow::response& res, const F& f, Args&&... args)
         {
             static_assert(!std::is_same<void, decltype(f(std::declval<crow::request>(), std::declval<Args>()...))>::value,
@@ -235,96 +243,79 @@ namespace crow
         }
 
         template<typename F, typename... Args>
-        typename std::enable_if<
-          !black_magic::CallHelper<F, black_magic::S<Args...>>::value &&
-            !black_magic::CallHelper<F, black_magic::S<crow::request&, Args...>>::value &&
-            black_magic::CallHelper<F, black_magic::S<crow::response&, Args...>>::value,
-          void>::type
+        typename std::enable_if<black_magic::is_callable<F, Args...>::value>::type
           wrapped_handler_call(crow::request& /*req*/, crow::response& res, const F& f, Args&&... args)
         {
-            static_assert(std::is_same<void, decltype(f(std::declval<crow::response&>(), std::declval<Args>()...))>::value,
-                          "Handler function with response argument should have void return type");
+            static_assert(!std::is_same<void, decltype(f(std::declval<Args>()...))>::value,
+                          "Handler function cannot have void return type; valid return types: string, int, crow::response, crow::returnable");
 
-            f(res, std::forward<Args>(args)...);
+            res = crow::response(f(std::forward<Args>(args)...));
+            res.end();
         }
 
-        template<typename F, typename... Args>
-        typename std::enable_if<
-          !black_magic::CallHelper<F, black_magic::S<Args...>>::value &&
-            !black_magic::CallHelper<F, black_magic::S<crow::request&, Args...>>::value &&
-            !black_magic::CallHelper<F, black_magic::S<crow::response&, Args...>>::value &&
-            black_magic::CallHelper<F, black_magic::S<const crow::request&, crow::response&, Args...>>::value,
-          void>::type
-          wrapped_handler_call(crow::request& req, crow::response& res, const F& f, Args&&... args)
+        template<typename F, typename App, typename... Middlewares>
+        struct handler_middleware_wrapper
         {
-            static_assert(std::is_same<void, decltype(f(std::declval<crow::request&>(), std::declval<crow::response&>(), std::declval<Args>()...))>::value,
-                          "Handler function with response argument should have void return type");
-
-            f(req, res, std::forward<Args>(args)...);
-        }
-
-        // wrapped_handler_call transparently wraps a handler call behind (req, res, args...)
-        template<typename F, typename... Args>
-        typename std::enable_if<
-          !black_magic::CallHelper<F, black_magic::S<Args...>>::value &&
-            !black_magic::CallHelper<F, black_magic::S<crow::request&, Args...>>::value &&
-            !black_magic::CallHelper<F, black_magic::S<crow::response&, Args...>>::value &&
-            !black_magic::CallHelper<F, black_magic::S<const crow::request&, crow::response&, Args...>>::value,
-          void>::type
-          wrapped_handler_call(crow::request& req, crow::response& res, const F& f, Args&&... args)
-        {
-            static_assert(std::is_same<void, decltype(f(std::declval<crow::request&>(), std::declval<crow::response&>(), std::declval<Args>()...))>::value,
-                          "Handler function with response argument should have void return type");
-
-            f(req, res, std::forward<Args>(args)...);
-        }
-
-        template<bool Reversed>
-        struct middleware_call_criteria_dynamic
-        {};
-
-        template<>
-        struct middleware_call_criteria_dynamic<false>
-        {
-            middleware_call_criteria_dynamic(const std::vector<int>& indices):
-              indices(indices), slider(0) {}
-
-            template<typename>
-            bool enabled(int mw_index) const
+            // CallCriteria bound to the current Middlewares pack
+            template<typename MW>
+            struct middleware_call_criteria
             {
-                if (slider < int(indices.size()) && indices[slider] == mw_index)
+                static constexpr bool value = black_magic::has_type<MW, std::tuple<Middlewares...>>::value;
+            };
+
+            template<typename... Args>
+            void operator()(crow::request& req, crow::response& res, Args&&... args) const
+            {
+                auto& ctx = *reinterpret_cast<typename App::context_t*>(req.middleware_context);
+                auto& container = *reinterpret_cast<typename App::mw_container_t*>(req.middleware_container);
+
+                auto glob_completion_handler = std::move(res.complete_request_handler_);
+                res.complete_request_handler_ = [] {};
+
+                middleware_call_helper<middleware_call_criteria,
+                                       0, typename App::context_t, typename App::mw_container_t>(container, req, res, ctx);
+
+                if (res.completed_)
                 {
-                    slider++;
-                    return true;
+                    glob_completion_handler();
+                    return;
                 }
-                return false;
+
+                res.complete_request_handler_ = [&ctx, &container, &req, &res, &glob_completion_handler] {
+                    after_handlers_call_helper<
+                      middleware_call_criteria,
+                      std::tuple_size<typename App::mw_container_t>::value - 1,
+                      typename App::context_t,
+                      typename App::mw_container_t>(container, ctx, req, res);
+                    glob_completion_handler();
+                };
+
+                wrapped_handler_call(req, res, f, std::forward<Args>(args)...);
             }
 
-        private:
-            const std::vector<int>& indices;
-            mutable int slider;
+            F f;
         };
 
-        template<>
-        struct middleware_call_criteria_dynamic<true>
+        template<typename Route, typename App, typename... Middlewares>
+        struct handler_call_bridge
         {
-            middleware_call_criteria_dynamic(const std::vector<int>& indices):
-              indices(indices), slider(int(indices.size()) - 1) {}
+            template<typename MW>
+            using check_app_contains = typename black_magic::has_type<MW, typename App::mw_container_t>;
 
-            template<typename>
-            bool enabled(int mw_index) const
+            static_assert(black_magic::all_true<(std::is_base_of<crow::ILocalMiddleware, Middlewares>::value)...>::value,
+                          "Local middleware has to inherit crow::ILocalMiddleware");
+
+            static_assert(black_magic::all_true<(check_app_contains<Middlewares>::value)...>::value,
+                          "Local middleware has to be listed in app middleware");
+
+            template<typename F>
+            void operator()(F&& f) const
             {
-                if (slider >= 0 && indices[slider] == mw_index)
-                {
-                    slider--;
-                    return true;
-                }
-                return false;
+                auto wrapped = handler_middleware_wrapper<F, App, Middlewares...>{std::forward<F>(f)};
+                tptr->operator()(std::move(wrapped));
             }
 
-        private:
-            const std::vector<int>& indices;
-            mutable int slider;
+            Route* tptr;
         };
 
     } // namespace detail

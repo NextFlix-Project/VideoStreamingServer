@@ -182,17 +182,17 @@ namespace crow
         CORSRules default_ = CORSRules(this);
     };
 
-    inline CORSRules& CORSRules::prefix(const std::string& prefix)
+    CORSRules& CORSRules::prefix(const std::string& prefix)
     {
         return handler_->prefix(prefix);
     }
 
-    inline CORSRules& CORSRules::blueprint(const Blueprint& bp)
+    CORSRules& CORSRules::blueprint(const Blueprint& bp)
     {
         return handler_->blueprint(bp);
     }
 
-    inline CORSRules& CORSRules::global()
+    CORSRules& CORSRules::global()
     {
         return handler_->global();
     }

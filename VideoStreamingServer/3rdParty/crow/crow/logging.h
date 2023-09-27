@@ -33,8 +33,6 @@ namespace crow
     class ILogHandler
     {
     public:
-        virtual ~ILogHandler() = default;
-
         virtual void log(std::string message, LogLevel level) = 0;
     };
 
@@ -62,7 +60,7 @@ namespace crow
                     prefix = "CRITICAL";
                     break;
             }
-            std::cerr << std::string("(") + timestamp() + std::string(") [") + prefix + std::string("] ") + message << std::endl;
+            std::cerr << "(" << timestamp() << ") [" << prefix << "] " << message << std::endl;
         }
 
     private:
