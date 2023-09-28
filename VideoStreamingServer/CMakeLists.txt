@@ -29,6 +29,7 @@ pkg_check_modules(CURL REQUIRED libcurl)
 
 include_directories(${LIBPQXX_INCLUDE_DIRS})
 set(CROW_INCLUDE_DIR ./3rdParty/crow)
+set (PUGIXML_INCLUDE_DIR ./3rdParty/pugixml)
 set (COMMON_INCLUDE_DIR ./Common)
 include_directories(${COMMON_INCLUDE_DIR})
 
@@ -45,6 +46,7 @@ target_link_libraries(VideoStreamingServer PRIVATE
 target_include_directories(VideoStreamingServer PRIVATE
     ${CROW_INCLUDE_DIR}
     ${CURL_INCLUDE_DIRS}
+    ${PUGIXML_INCLUDE_DIR}
     ${LIBDASH_INCLUDE_DIRS}
     ./Common
     /usr/include/postgresql

@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 namespace NextFlix
 {
@@ -17,5 +18,7 @@ namespace NextFlix
 
     private:
         void initRoutes();
+        void updateManifest(std::string id);
+
     };
 }
