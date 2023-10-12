@@ -48,7 +48,7 @@ void VideoStreamingRoutes::initRoutes()
     CROW_ROUTE(server->getCrowApp(), "/stream/segment")
     ([](const crow::request &req, crow::response &res)
      {
-        std::string id = req.url_params.get("id");
+     std::string id = req.url_params.get("id");
         std::string segment = req.url_params.get("segment");
         try {
  
