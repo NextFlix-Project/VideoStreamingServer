@@ -115,11 +115,10 @@ inline int qs_parse(char * qs, char * qs_kv[], int qs_kv_size)
     {
         qs_kv[i] = substr_ptr;
         j = strcspn(substr_ptr, "&");
-        if ( substr_ptr[j] == '\0' ) {  break;  }
+        if ( substr_ptr[j] == '\0' ) { i++; break;  } // x &'s -> means x iterations of this loop -> means *x+1* k/v pairs
         substr_ptr += j + 1;
         i++;
     }
-    i++;  // x &'s -> means x iterations of this loop -> means *x+1* k/v pairs
 
     // we only decode the values in place, the keys could have '='s in them
     // which will hose our ability to distinguish keys from values later
@@ -485,8 +484,4 @@ namespace crow
         std::vector<char*> key_value_pairs_;
     };
 
-<<<<<<< HEAD
 } // end namespace
-=======
-} // end namespace
->>>>>>> 283ef2e43f2169ca8b9ac3bcda7399087f1ab26c
